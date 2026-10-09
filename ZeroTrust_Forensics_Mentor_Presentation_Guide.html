@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>ZeroTrust Forensics — Mentor Presentation Guide & Operations Manual</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      color: #1E293B;
+      background: #FFFFFF;
+      margin: 0;
+      padding: 40px;
+      line-height: 1.6;
+    }
+    .header {
+      background: #0B0F19;
+      color: #FFFFFF;
+      padding: 30px;
+      border-radius: 12px;
+      margin-bottom: 30px;
+    }
+    .header h1 {
+      margin: 0;
+      font-size: 26px;
+      color: #06B6D4;
+    }
+    .header p {
+      margin: 5px 0 0 0;
+      font-size: 14px;
+      color: #94A3B8;
+    }
+    h2 {
+      color: #0B0F19;
+      border-bottom: 2px solid #06B6D4;
+      padding-bottom: 8px;
+      margin-top: 30px;
+      font-size: 20px;
+    }
+    h3 {
+      color: #0369A1;
+      font-size: 16px;
+      margin-top: 20px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+      font-size: 13px;
+    }
+    th, td {
+      border: 1px solid #CBD5E1;
+      padding: 10px 12px;
+      text-align: left;
+    }
+    th {
+      background: #F1F5F9;
+      color: #0F172A;
+    }
+    .step-box {
+      background: #F8FAFC;
+      border-left: 4px solid #06B6D4;
+      padding: 15px;
+      margin: 10px 0;
+      border-radius: 0 8px 8px 0;
+    }
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: bold;
+      background: #E0F2FE;
+      color: #0369A1;
+    }
+    @media print {
+      body { padding: 0; }
+      .header { background: #000000; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <h1>ZEROTRUST FORENSICS</h1>
+    <p>Digital Forensics Case Management & Cryptographic Custody System</p>
+    <p>Comprehensive Mentor Presentation Guide, Module Breakdown & Live Operations Manual</p>
+  </div>
+
+  <h2>1. How to Present to Your Mentor / Evaluators</h2>
+  
+  <div class="step-box">
+    <h3>The 3-Minute Presentation Pitch:</h3>
+    <p>"During cybercrime investigations, traditional case management tools fail to detect if an evidence file on disk was modified, and record custody transfers as unverified text edits. ZeroTrust Forensics enforces continuous verification: every evidence upload gets an intake SHA-256 fingerprint, custody transfers require dual Ed25519 digital signatures from both parties, and every event is stored in an append-only hash-linked audit ledger with real-time tamper alerts."</p>
+  </div>
+
+  <h3>Key Talking Points (Why Our Solution Over Standard Blockchain):</h3>
+  <ul>
+    <li><strong>Direct File Byte Verification</strong>: Blockchains cannot store multi-gigabyte forensic files (RAM dumps, disk images) and only store text. Our system verifies physical disk file bytes against SHA-256 intake digests.</li>
+    <li><strong>Dual-Party Ed25519 Approval</strong>: Unilateral transfers are rejected. Both Sender and Intended Receiver must sign the payload independently before custody shifts.</li>
+    <li><strong>Zero Gas Fees & Sub-second Verification</strong>: Delivers the exact cryptographic immutability of a blockchain hash chain ($\text{Prev\_Hash} \to \text{Curr\_Hash}$) with zero transaction cost or P2P node latency.</li>
+    <li><strong>Live Anomaly Simulator</strong>: Built-in controls allow evaluators to flip 1 byte on disk live and watch the system catch the violation instantly.</li>
+  </ul>
+
+  <h2>2. Module-by-Module Explanation & Functionality</h2>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Module Name</th>
+        <th>What It Does</th>
+        <th>Cryptographic / Security Mechanism</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>1. Authentication & RBAC</strong></td>
+        <td>Controls user access for Admin, Investigator, Lab Analyst, and Auditor.</td>
+        <td>Node <code>scrypt</code> password hashing + unique salts + <code>timingSafeEqual</code> comparison. Server-enforced session cookies.</td>
+      </tr>
+      <tr>
+        <td><strong>2. Cases Directory</strong></td>
+        <td>Organizes investigation dockets with classification levels.</td>
+        <td>Classifications (SECRET, CONFIDENTIAL, RESTRICTED, UNCLASSIFIED) with evidence linkage.</td>
+      </tr>
+      <tr>
+        <td><strong>3. Evidence Vault</strong></td>
+        <td>Uploads, fingerprints, and re-checks digital evidence integrity.</td>
+        <td>Genuine SHA-256 intake hashing, physical file byte re-verification, AES-256-GCM encrypted notes, and Evidence Receipts.</td>
+      </tr>
+      <tr>
+        <td><strong>4. Custody Transfers</strong></td>
+        <td>Handles chain of custody transfers between personnel.</td>
+        <td>Asymmetric Ed25519 digital keypairs. Transfer requires dual independent signatures verified via <code>crypto.verify</code>.</td>
+      </tr>
+      <tr>
+        <td><strong>5. Audit Ledger Chain</strong></td>
+        <td>Records immutable event log history.</td>
+        <td>Append-only SHA-256 hash chain ($H_N = \text{SHA-256}(N \parallel \dots \parallel H_{N-1})$). Includes chain recalculation & repair tools.</td>
+      </tr>
+      <tr>
+        <td><strong>6. Security Alerts</strong></td>
+        <td>Surfaces real-time security violations and anomaly reports.</td>
+        <td>Automated trigger on file tamper, forged signature, or audit break with severity levels (CRITICAL, HIGH, MEDIUM, LOW).</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>3. Step-by-Step Live Demonstration Checklist (How to Check the Working)</h2>
+
+  <div class="step-box">
+    <strong>Step 1: Launch & Access App</strong><br>
+    Start server via <code>npm run start -- -p 3001</code> and open <code>http://localhost:3001</code>.
+  </div>
+
+  <div class="step-box">
+    <strong>Step 2: Sign In as Investigator</strong><br>
+    Click "Investigator" on the Quick Role Switcher Bar to sign in as Det. Marcus Vance.
+  </div>
+
+  <div class="step-box">
+    <strong>Step 3: Register New Evidence</strong><br>
+    Navigate to <strong>Evidence Vault</strong> &rarr; Click <strong>Upload & Fingerprint Evidence</strong>. Select a sample file. Observe the 64-character SHA-256 hash computed directly off the file bytes.
+  </div>
+
+  <div class="step-box">
+    <strong>Step 4: Run SHA-256 Verification</strong><br>
+    Click <strong>Verify Hash</strong>. Confirm the green status: <em>INTACT</em>.
+  </div>
+
+  <div class="step-box">
+    <strong>Step 5: Test Live File Tampering Detection</strong><br>
+    Click <strong>Simulate Tamper</strong> (alters 1 byte on disk) &rarr; Click <strong>Verify Hash</strong>. Watch the status turn RED <em>TAMPERED</em> and trigger a <strong>CRITICAL Security Alert</strong>!
+  </div>
+
+  <div class="step-box">
+    <strong>Step 6: Restore File Bytes</strong><br>
+    Click <strong>Restore File</strong> &rarr; Click <strong>Verify Hash</strong> to confirm return to green <em>INTACT</em>.
+  </div>
+
+  <div class="step-box">
+    <strong>Step 7: Initiate Custody Transfer (Ed25519 Sign)</strong><br>
+    Navigate to <strong>Custody Transfers</strong> &rarr; Click <strong>Initiate Custody Transfer</strong> to Elena Rostova (Lab Analyst). Observe the Sender's Ed25519 digital signature.
+  </div>
+
+  <div class="step-box">
+    <strong>Step 8: Accept Transfer as Receiver</strong><br>
+    Switch role to <strong>Lab Analyst</strong> &rarr; Click <strong>Sign & Accept Custody</strong>. Observe dual-signature cryptographic verification and custodian update.
+  </div>
+
+  <div class="step-box">
+    <strong>Step 9: Inspect & Verify Audit Chain</strong><br>
+    Navigate to <strong>Audit Ledger Chain</strong> &rarr; Click <strong>Verify Audit Ledger Chain</strong> to verify sequence hashes from genesis block to current head.
+  </div>
+
+  <h2>4. Demo Credentials Reference</h2>
+  <ul>
+    <li><strong>Admin</strong>: <code>admin@zerotrust.local</code> / <code>AdminPass123!</code></li>
+    <li><strong>Investigator</strong>: <code>investigator@zerotrust.local</code> / <code>InvestigatorPass123!</code></li>
+    <li><strong>Lab Analyst</strong>: <code>analyst@zerotrust.local</code> / <code>AnalystPass123!</code></li>
+    <li><strong>Auditor</strong>: <code>auditor@zerotrust.local</code> / <code>AuditorPass123!</code></li>
+  </ul>
+
+</body>
+</html>
