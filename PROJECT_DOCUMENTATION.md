@@ -1,4 +1,4 @@
-# ZeroTrust Forensics — Comprehensive Architecture & Deployment Guide
+# ZeroTrust Forensics — Comprehensive Architecture, Novelty vs. Blockchain & Deployment Guide
 
 > **Digital Forensics Case Management System**
 > *Engineered with Cryptographic Chain of Custody, SHA-256 Evidence Fingerprinting, Ed25519 Dual Signatures, and Hash-Linked Audit Ledgers.*
@@ -7,15 +7,16 @@
 
 ## 📋 Table of Contents
 1. [Executive Summary & Problem Statement](#1-executive-summary--problem-statement)
-2. [Proposed ZeroTrust Solution & High-Level Architecture](#2-proposed-zerotrust-solution--high-level-architecture)
-3. [Internal Deep Dive into Application Modules](#3-internal-deep-dive-into-application-modules)
-   - [3.1 Authentication & Server-Enforced RBAC](#31-authentication--server-enforced-rbac)
-   - [3.2 Forensic Case Management Directory](#32-forensic-case-management-directory)
-   - [3.3 Digital Evidence Vault & SHA-256 Checksums](#33-digital-evidence-vault--sha-256-checksums)
-   - [3.4 Chain of Custody & Ed25519 Dual Signatures](#34-chain-of-custody--ed25519-dual-signatures)
-   - [3.5 Append-Only Hash-Linked Audit Ledger](#35-append-only-hash-linked-audit-ledger)
-   - [3.6 Security Alerts & Anomaly Center](#36-security-alerts--anomaly-center)
-4. [Step-by-Step AWS Cloud Deployment Guide](#4-step-by-step-aws-cloud-deployment-guide)
+2. [Novelty Analysis: ZeroTrust Forensics vs. Blockchain](#2-novelty-analysis-zerotrust-forensics-vs-blockchain)
+3. [Proposed ZeroTrust Solution & High-Level Architecture](#3-proposed-zerotrust-solution--high-level-architecture)
+4. [Internal Deep Dive into Application Modules](#4-internal-deep-dive-into-application-modules)
+   - [4.1 Authentication & Server-Enforced RBAC](#41-authentication--server-enforced-rbac)
+   - [4.2 Forensic Case Management Directory](#42-forensic-case-management-directory)
+   - [4.3 Digital Evidence Vault & SHA-256 Checksums](#43-digital-evidence-vault--sha-256-checksums)
+   - [4.4 Chain of Custody & Ed25519 Dual Signatures](#44-chain-of-custody--ed25519-dual-signatures)
+   - [4.5 Append-Only Hash-Linked Audit Ledger](#45-append-only-hash-linked-audit-ledger)
+   - [4.6 Security Alerts & Anomaly Center](#46-security-alerts--anomaly-center)
+5. [Step-by-Step AWS Cloud Deployment Guide](#5-step-by-step-aws-cloud-deployment-guide)
 
 ---
 
@@ -31,10 +32,40 @@ During digital forensics investigations (cybercrime, corporate insider exfiltrat
 
 ---
 
-## 2. Proposed ZeroTrust Solution & High-Level Architecture
+## 2. Novelty Analysis: ZeroTrust Forensics vs. Blockchain
 
-### The Solution: ZeroTrust Forensics
-ZeroTrust Forensics replaces implicit trust with continuous cryptographic verification across the entire lifecycle of digital evidence.
+When presenting this project to academic mentors, evaluators, or CISOs, a common question arises:  
+**"Why not simply use a Blockchain (e.g. Ethereum or Hyperledger) for forensic chain of custody?"**
+
+Here is the technical comparison highlighting the **novelty**, **performance advantages**, and **forensic engineering superiority** of our ZeroTrust Forensics architecture over traditional Blockchain implementations:
+
+### Comparative Matrix
+
+| Feature / Dimension | Standard Blockchain (Ethereum / Hyperledger) | ZeroTrust Forensics Architecture | Technical & Novelty Advantage |
+| :--- | :--- | :--- | :--- |
+| **Evidence File Storage** | Cannot store multi-gigabyte raw files (RAM dumps, E01 disk images) on-chain due to block size limits. Requires complex off-chain storage (IPFS/S3). | **Integrated Vault & Native SHA-256 Byte Fingerprinting**: Stores physical evidence files locally/EBS with direct byte-level SHA-256 digest computation. | Direct forensic file intake without multi-cloud off-chain storage latency or external API failure points. |
+| **Custody Transfer Approval** | Unilateral push transfer (Sender pushes token to address without recipient cryptographic consent). | **Dual-Party Asymmetric Ed25519 Verification**: Both Sender AND Intended Receiver MUST sign the payload with independent keypairs. | Enforces strict legal chain-of-custody rules where unaccepted transfers are rejected and audited. |
+| **Tamper Detection Scope** | Guarantees transaction history immutability, but **cannot detect if a stored physical file on local disk was edited**. | **Bi-directional Tamper Detection**: Verifies both **Physical File Bytes** (SHA-256) AND **Ledger Chain Links** ($H_N = \text{SHA-256}(\dots \parallel H_{N-1})$). | Detects unauthorized disk-level byte modifications immediately via active security alerts. |
+| **Confidentiality & Privacy** | Public ledgers expose metadata; private blockchains require complex Zero-Knowledge Proof (ZKP) circuits. | **AES-256-GCM Metadata Encryption**: Encrypts sensitive suspect notes & informant tags using 256-bit GCM keys with authenticated tags. | RBAC-restricted metadata decryption with audit logging, complying with forensic privacy standards. |
+| **Latency & Cost** | High latency (seconds to minutes block confirmation) and gas fees or node cluster maintenance. | **Micro-second Hash-Linked Audit Chain**: Instant SHA-256 recalculation, 0 gas fees, lightweight deployment. | High-speed laboratory operations with zero financial overhead and instant verification. |
+| **Demonstrability & Testing** | Difficult to simulate attack vectors live without altering blockchain state or resetting nodes. | **Built-in Tamper & Anomaly Simulator**: Includes interactive tools to simulate file byte edits & DB tampering live. | Proves integrity verification and security alert detection live in front of evaluators. |
+
+---
+
+### Key Novelty Points for Mentors
+
+1. **Dual-Party Cryptographic Signatures (Ed25519)**:
+   Unlike blockchain transfers where a sender unilaterally pushes an asset, ZeroTrust Forensics holds transfer requests in `PENDING_RECEIVER_SIGNATURE`. Custody changes **only** after both Sender and Receiver supply valid Ed25519 signatures verified via server-side public key cryptography (`crypto.verify`).
+
+2. **Bi-directional Integrity (File-Level + Ledger-Level)**:
+   A blockchain only proves that a hash string was logged at a certain time. It does **not** verify whether a 20GB forensic image on a laboratory hard drive was altered by a rogue analyst. Our system performs live file byte re-verification against stored original digests.
+
+3. **Zero-Trust Verification Without Heavy Infrastructure**:
+   Delivers the cryptographic proof of a hash-linked chain without requiring expensive P2P node networks, mining, or complex smart contract deployments.
+
+---
+
+## 3. Proposed ZeroTrust Solution & High-Level Architecture
 
 ```mermaid
 flowchart TD
@@ -51,105 +82,94 @@ flowchart TD
 
 ---
 
-## 3. Internal Deep Dive into Application Modules
+## 4. Internal Deep Dive into Application Modules
 
-### 3.1 Authentication & Server-Enforced RBAC
+### 4.1 Authentication & Server-Enforced RBAC
 - **Password Protection**: Passwords are hashed using Node.js `scrypt` with a 16-byte random salt and verified using `crypto.timingSafeEqual`.
 - **Role Permission Matrix**:
-  - **Admin**: Full administrative privileges (User management, system configuration, global audit review, alert resolution).
+  - **Admin**: User directory management, system configuration, global audit review, alert resolution.
   - **Investigator**: Case creation, evidence upload, custody transfer initiation, metadata decryption.
   - **Lab Analyst**: View assigned evidence, run hash re-verification, sign custody transfer acceptances.
   - **Auditor**: Read-only access, run ledger chain verification, resolve security alerts.
 
-### 3.2 Forensic Case Management Directory
+### 4.2 Forensic Case Management Directory
 - Organizes investigation dockets with classification levels (`SECRET`, `CONFIDENTIAL`, `RESTRICTED`, `UNCLASSIFIED`).
 - Links associated evidence artifacts, lead investigator details, and audit history.
 
-### 3.3 Digital Evidence Vault & SHA-256 Checksums
+### 4.3 Digital Evidence Vault & SHA-256 Checksums
 - Reads raw intake file bytes and computes a 256-bit SHA-256 digest:
   $$\text{SHA-256}(B) = H$$
-- **Re-Verification**: Reads physical file bytes from disk on demand, recalculates current digest, and compares with original stored digest. If mismatch is detected, sets status to `TAMPERED` and triggers an automated `CRITICAL` Security Alert.
-- **AES-256-GCM Metadata Encryption**: Confidential notes encrypted with 256-bit GCM keys, random 96-bit IVs, and authentication tags.
+- **Re-Verification**: Reads physical file bytes from disk on demand, recalculates current digest, and compares with original stored digest. If a mismatch is detected, it sets status to `TAMPERED` and triggers an automated `CRITICAL` Security Alert.
+- **AES-256-GCM Metadata Encryption**: Confidential notes are encrypted with 256-bit GCM keys, random 96-bit IVs, and authentication tags.
 
-### 3.4 Chain of Custody & Ed25519 Dual Signatures
-- Every user gets a unique Ed25519 public/private keypair at registration.
+### 4.4 Chain of Custody & Ed25519 Dual Signatures
+- Every user receives a unique Ed25519 public/private keypair at registration.
 - **Transfer Protocol**:
-  1. `payload = EvidenceID | SenderID | ReceiverID | Timestamp | Reason`
+  1. $\text{payload} = \text{EvidenceID} \parallel \text{SenderID} \parallel \text{ReceiverID} \parallel \text{Timestamp} \parallel \text{Reason}$
   2. Sender signs payload with Sender's Ed25519 Private Key.
   3. Receiver signs payload with Receiver's Ed25519 Private Key.
   4. Server verifies BOTH signatures against registered Public Keys using `crypto.verify`. Only if both signatures match is custody updated.
 
-### 3.5 Append-Only Hash-Linked Audit Ledger
+### 4.5 Append-Only Hash-Linked Audit Ledger
 - Each event is recorded into `audit_ledger` with sequence number $N$.
 - Block Hash Formula:
   $$\text{Current\_Hash}_N = \text{SHA-256}(N \parallel \text{Timestamp} \parallel \text{ActorID} \parallel \text{Action} \parallel \text{ResourceID} \parallel \text{Details} \parallel \text{Current\_Hash}_{N-1})$$
 - **Ledger Verification**: Recalculates the chain from genesis ($N=1$) to current head to detect database tampering.
 
-### 3.6 Security Alerts & Anomaly Center
+### 4.6 Security Alerts & Anomaly Center
 - Automatically logs security alerts for file tampering, invalid digital signatures, and audit chain breaks.
 
 ---
 
-## 4. Step-by-Step AWS Cloud Deployment Guide
+## 5. Step-by-Step AWS Cloud Deployment Guide
 
 ### Recommended AWS Architecture
-- **Compute**: AWS EC2 instance (Ubuntu 24.04 LTS, `t3.small` or `t3.medium`) or AWS App Runner / ECS.
+- **Compute**: AWS EC2 instance (Ubuntu 24.04 LTS, `t3.small` or `t3.medium`).
 - **Process Manager**: PM2 (Daemon process runner with auto-restart on system reboot).
 - **Reverse Proxy**: Nginx with TLS/SSL encryption (Let's Encrypt / Certbot).
 - **Storage**: AWS EBS Elastic Block Store volume for local SQLite database & `./uploads` directory.
 
 ---
 
-### Deployment Step 1: Provision & Configure AWS EC2 Instance
+### Step 1: Provision AWS EC2 Instance
 
-1. Log into **AWS Management Console** and navigate to **EC2**.
+1. Log into **AWS Management Console** and open **EC2**.
 2. Click **Launch Instance**:
    - **Name**: `ZeroTrust-Forensics-Server`
    - **AMI**: Ubuntu Server 24.04 LTS (64-bit x86)
    - **Instance Type**: `t3.small` (2 vCPU, 2 GB RAM)
-   - **Key Pair**: Create or select an existing SSH key pair (`zerotrust-key.pem`).
-3. **Network & Security Group Settings**:
-   Allow inbound traffic for:
-   - **SSH (Port 22)**: My IP (for SSH access)
+   - **Key Pair**: Create or select an SSH key pair (`zerotrust-key.pem`).
+3. **Inbound Security Group Rules**:
+   - **SSH (Port 22)**: Your IP
    - **HTTP (Port 80)**: Anywhere (`0.0.0.0/0`)
    - **HTTPS (Port 443)**: Anywhere (`0.0.0.0/0`)
-   - **Custom TCP (Port 3001)**: Optional (for testing)
 
 ---
 
-### Deployment Step 2: Connect to EC2 & Install Node.js Environment
+### Step 2: Connect to EC2 & Install Node.js Environment
 
-Open terminal and SSH into your AWS instance:
+Connect via SSH:
 ```bash
 chmod 400 zerotrust-key.pem
 ssh -i "zerotrust-key.pem" ubuntu@<YOUR-EC2-PUBLIC-IP>
 ```
 
-Update packages and install Node.js 20/22 LTS & Build tools:
+Install Node.js 20 LTS, Git, and Nginx:
 ```bash
 sudo apt update && sudo apt upgrade -y
 curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
 sudo apt install -y nodejs git build-essential nginx
 ```
 
-Verify installation:
-```bash
-node -v   # Should show v20.x or v22.x
-npm -v    # Should show v10.x
-```
-
 ---
 
-### Deployment Step 3: Clone Repository & Build Application
+### Step 3: Clone Repository & Build Application
 
-Clone your GitHub repository onto the AWS EC2 instance:
+Clone repository and configure production environment:
 ```bash
 git clone https://github.com/Hema-1706/zerotrust-forensics.git
 cd zerotrust-forensics
-```
 
-Create production `.env` file:
-```bash
 cat << 'EOF' > .env
 PORT=3001
 NODE_ENV=production
@@ -158,10 +178,7 @@ UPLOAD_DIR=./uploads
 JWT_SECRET=production-secret-key-32-bytes-zerotrust
 AES_METADATA_MASTER_KEY=4a8f9c1e2b3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f
 EOF
-```
 
-Install dependencies, run tests, and build production Next.js assets:
-```bash
 npm install
 npm test
 npm run build
@@ -169,40 +186,33 @@ npm run build
 
 ---
 
-### Deployment Step 4: Configure PM2 Process Manager
+### Step 4: Configure PM2 Process Manager
 
-Install PM2 globally to keep the Node.js application running 24/7 and auto-restart on system reboots:
+Run application 24/7 as a background daemon:
 ```bash
 sudo npm install -g pm2
 pm2 start npm --name "zerotrust-forensics" -- run start -- -p 3001
 pm2 save
 pm2 startup
 ```
-
-*(Copy and execute the output command provided by `pm2 startup` to enable systemd auto-start).*
-
-Verify application status:
-```bash
-pm2 status
-curl http://localhost:3001/api/auth/me
-```
+*(Copy and execute the output line generated by `pm2 startup`).*
 
 ---
 
-### Deployment Step 5: Configure Nginx Reverse Proxy & SSL (HTTPS)
+### Step 5: Configure Nginx Reverse Proxy & HTTPS
 
-Create Nginx server configuration for ZeroTrust Forensics:
+Create Nginx site configuration:
 ```bash
 sudo nano /etc/nginx/sites-available/zerotrust
 ```
 
-Add the following Nginx reverse proxy configuration (replace `yourdomain.com` or EC2 IP):
+Paste configuration:
 ```nginx
 server {
     listen 80;
     server_name yourdomain.com <YOUR-EC2-PUBLIC-IP>;
 
-    client_max_body_size 100M; # Support large evidence file uploads
+    client_max_body_size 100M;
 
     location / {
         proxy_pass http://127.0.0.1:3001;
@@ -218,7 +228,7 @@ server {
 }
 ```
 
-Enable site configuration and restart Nginx:
+Enable site configuration:
 ```bash
 sudo ln -s /etc/nginx/sites-available/zerotrust /etc/nginx/sites-enabled/
 sudo rm -f /etc/nginx/sites-enabled/default
@@ -226,7 +236,7 @@ sudo nginx -t
 sudo systemctl restart nginx
 ```
 
-#### Add Free Let's Encrypt SSL/TLS Certificate (Optional for Domains):
+#### Add Free Let's Encrypt SSL/TLS Certificate:
 ```bash
 sudo apt install -y certbot python3-certbot-nginx
 sudo certbot --nginx -d yourdomain.com
@@ -234,15 +244,11 @@ sudo certbot --nginx -d yourdomain.com
 
 ---
 
-### Deployment Step 6: Backup & Persistence Architecture
+### Step 6: Backup & Persistence Architecture
 
-1. **Database & Evidence Backup script**:
-   Set up a daily cron job to back up `./data/zerotrust_forensics.db` and `./uploads` to an AWS S3 bucket:
-   ```bash
-   sudo apt install -y awscli
-   aws s3 sync ./data s3://your-forensics-backup-bucket/data
-   aws s3 sync ./uploads s3://your-forensics-backup-bucket/uploads
-   ```
-
-2. Access your AWS deployed production application live at:
-   `https://yourdomain.com` or `http://<YOUR-EC2-PUBLIC-IP>`
+Set up periodic backup of SQLite database & `./uploads` directory to an AWS S3 bucket:
+```bash
+sudo apt install -y awscli
+aws s3 sync ./data s3://your-forensics-backup-bucket/data
+aws s3 sync ./uploads s3://your-forensics-backup-bucket/uploads
+```
